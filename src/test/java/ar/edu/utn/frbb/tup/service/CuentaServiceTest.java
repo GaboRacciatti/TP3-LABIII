@@ -77,7 +77,7 @@ class CuentaServiceTest {
         Cliente gabo = CrearCliente();
         Cuenta cuenta = CrearCuenta(gabo, TipoCuenta.CAJA_AHORRO, TipoMoneda.PESOS, 1000.0);
         when(cuentaDao.find(cuenta.getNumeroCuenta())).thenReturn(cuenta);  
-    
+        
         assertThrows(CuentaAlreadyExistsException.class, () -> cuentaService.darDeAltaCuenta(cuenta, gabo.getDni()));
         doThrow(CuentaAlreadyExistsException.class).when(cuentaDao).save(cuenta);
     }  
