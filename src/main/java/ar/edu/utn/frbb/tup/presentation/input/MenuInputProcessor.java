@@ -1,11 +1,8 @@
 package ar.edu.utn.frbb.tup.presentation.input;
 
-import ar.edu.utn.frbb.tup.model.Banco;
-import ar.edu.utn.frbb.tup.model.Cliente;
-import ar.edu.utn.frbb.tup.model.Cuenta;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
+
+import ar.edu.utn.frbb.tup.model.exception.tipoDeCuentaSoportada;
 
 @Component
 public class MenuInputProcessor extends BaseInputProcessor{
@@ -23,7 +20,7 @@ public class MenuInputProcessor extends BaseInputProcessor{
         this.showInfoCliente = showInfoCliente;
     }
 
-    public void renderMenu() {
+    public void renderMenu() throws tipoDeCuentaSoportada {
 
         while (!exit) {
             System.out.println("Bienveido a la aplicación de Banco!");

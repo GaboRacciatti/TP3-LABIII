@@ -16,6 +16,14 @@ public class Cuenta {
         this.balance = 0;
         this.fechaCreacion = LocalDateTime.now();
     }
+    
+    public Cuenta(long numeroCuenta, TipoCuenta tipoCuenta, TipoMoneda moneda, double balance) {
+        this.numeroCuenta = numeroCuenta;
+        this.tipoCuenta = tipoCuenta;
+        this.moneda = moneda;
+        this.balance = (int) balance; // Asumiendo que quieres almacenar el balance como un entero
+        this.fechaCreacion = LocalDateTime.now();
+    }
 
     public Cliente getTitular() {
         return titular;
@@ -74,8 +82,9 @@ public class Cuenta {
         this.balance = this.balance - cantidadADebitar;
     }
 
-    public void setNumeroCuenta(long numeroCuenta) {
+    public Cuenta setNumeroCuenta(long numeroCuenta) {
         this.numeroCuenta = numeroCuenta;
+        return null;
     }
 
     public void forzaDebitoDeCuenta(int i) {

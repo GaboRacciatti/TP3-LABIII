@@ -14,11 +14,10 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -45,7 +44,7 @@ public class ClienteServiceTest {
     @Test
     public void testClienteSuccess() throws ClienteAlreadyExistsException {
         Cliente cliente = new Cliente();
-        cliente.setFechaNacimiento(LocalDate.of(1978,3,25));
+        cliente.setFechaNacimiento(LocalDate.of(1978, 3, 25));
         cliente.setDni(29857643);
         cliente.setTipoPersona(TipoPersona.PERSONA_FISICA);
         clienteService.darDeAltaCliente(cliente);
@@ -59,7 +58,7 @@ public class ClienteServiceTest {
         pepeRino.setDni(26456437);
         pepeRino.setNombre("Pepe");
         pepeRino.setApellido("Rino");
-        pepeRino.setFechaNacimiento(LocalDate.of(1978, 3,25));
+        pepeRino.setFechaNacimiento(LocalDate.of(1978, 3, 25));
         pepeRino.setTipoPersona(TipoPersona.PERSONA_FISICA);
 
         when(clienteDao.find(26456437, false)).thenReturn(new Cliente());
@@ -67,15 +66,13 @@ public class ClienteServiceTest {
         assertThrows(ClienteAlreadyExistsException.class, () -> clienteService.darDeAltaCliente(pepeRino));
     }
 
-
-
     @Test
     public void testAgregarCuentaAClienteSuccess() throws TipoCuentaAlreadyExistsException {
         Cliente pepeRino = new Cliente();
         pepeRino.setDni(26456439);
         pepeRino.setNombre("Pepe");
         pepeRino.setApellido("Rino");
-        pepeRino.setFechaNacimiento(LocalDate.of(1978, 3,25));
+        pepeRino.setFechaNacimiento(LocalDate.of(1978, 3, 25));
         pepeRino.setTipoPersona(TipoPersona.PERSONA_FISICA);
 
         Cuenta cuenta = new Cuenta()
@@ -91,9 +88,7 @@ public class ClienteServiceTest {
 
         assertEquals(1, pepeRino.getCuentas().size());
         assertEquals(pepeRino, cuenta.getTitular());
-
     }
-
 
     @Test
     public void testAgregarCuentaAClienteDuplicada() throws TipoCuentaAlreadyExistsException {
@@ -101,7 +96,7 @@ public class ClienteServiceTest {
         luciano.setDni(26456439);
         luciano.setNombre("Pepe");
         luciano.setApellido("Rino");
-        luciano.setFechaNacimiento(LocalDate.of(1978, 3,25));
+        luciano.setFechaNacimiento(LocalDate.of(1978, 3, 25));
         luciano.setTipoPersona(TipoPersona.PERSONA_FISICA);
 
         Cuenta cuenta = new Cuenta()
@@ -122,10 +117,82 @@ public class ClienteServiceTest {
         verify(clienteDao, times(1)).save(luciano);
         assertEquals(1, luciano.getCuentas().size());
         assertEquals(luciano, cuenta.getTitular());
-
     }
 
-    //Agregar una CA$ y CC$ --> success 2 cuentas, titular peperino
-    //Agregar una CA$ y CAU$S --> success 2 cuentas, titular peperino...
-    //Testear clienteService.buscarPorDni
+    @Test
+    public void testAgregarCuentaCajaAhorroYCuentaCorriente() throws TipoCuentaAlreadyExistsException {
+        Cliente pepeRino = new Cliente();
+        pepeRino.setDni(26456439);
+        pepeRino.setNombre("Pepe");
+        pepeRino.setApellido("Rino");
+        pepeRino.setFechaNacimiento(LocalDate.of(1978, 3, 25));
+        pepeRino.setTipoPersona(TipoPersona.PERSONA_FISICA);
+
+        Cuenta cuentaAhorro = new Cuenta()
+                .setMoneda(TipoMoneda.PESOS)
+                .setBalance(500000)
+                .setTipoCuenta(TipoCuenta.CAJA_AHORRO);
+
+        Cuenta cuentaCorriente = new Cuenta()
+                .setMoneda(TipoMoneda.PESOS)
+                .setBalance(1000000)
+                .setTipoCuenta(TipoCuenta.CUENTA_CORRIENTE);
+
+        when(clienteDao.find(26456439, true)).thenReturn(pepeRino);
+
+        clienteService.agregarCuenta(cuentaAhorro, pepeRino.getDni());
+        clienteService.agregarCuenta(cuentaCorriente, pepeRino.getDni());
+
+        verify(clienteDao, times(2)).save(pepeRino);
+        assertEquals(2, pepeRino.getCuentas().size());
+        assertTrue(pepeRino.getCuentas().contains(cuentaAhorro));
+        assertTrue(pepeRino.getCuentas().contains(cuentaCorriente));
+    }
+
+    @Test
+    public void testAgregarCuentaCajaAhorroYCajaAhorroEnDolares() throws TipoCuentaAlreadyExistsException {
+        Cliente pepeRino = new Cliente();
+        pepeRino.setDni(26456439);
+        pepeRino.setNombre("Pepe");
+        pepeRino.setApellido("Rino");
+        pepeRino.setFechaNacimiento(LocalDate.of(1978, 3, 25));
+        pepeRino.setTipoPersona(TipoPersona.PERSONA_FISICA);
+
+        Cuenta cuentaAhorroPesos = new Cuenta()
+                .setMoneda(TipoMoneda.PESOS)
+                .setBalance(500000)
+                .setTipoCuenta(TipoCuenta.CAJA_AHORRO);
+
+        Cuenta cuentaAhorroDolares = new Cuenta()
+                .setMoneda(TipoMoneda.DOLARES)
+                .setBalance(10000)
+                .setTipoCuenta(TipoCuenta.CAJA_AHORRO);
+
+        when(clienteDao.find(26456439, true)).thenReturn(pepeRino);
+
+        clienteService.agregarCuenta(cuentaAhorroPesos, pepeRino.getDni());
+        clienteService.agregarCuenta(cuentaAhorroDolares, pepeRino.getDni());
+
+        verify(clienteDao, times(2)).save(pepeRino);
+        assertEquals(2, pepeRino.getCuentas().size());
+        assertTrue(pepeRino.getCuentas().contains(cuentaAhorroPesos));
+        assertTrue(pepeRino.getCuentas().contains(cuentaAhorroDolares));
+    }
+
+    @Test
+    public void testBuscarPorDni() {
+        Cliente pepeRino = new Cliente();
+        pepeRino.setDni(26456439);
+        pepeRino.setNombre("Pepe");
+        pepeRino.setApellido("Rino");
+        pepeRino.setFechaNacimiento(LocalDate.of(1978, 3, 25));
+        pepeRino.setTipoPersona(TipoPersona.PERSONA_FISICA);
+
+        when(clienteDao.find(26456439, true)).thenReturn(pepeRino);
+
+        Optional<Cliente> clienteEncontrado = Optional.ofNullable(clienteService.buscarClientePorDni(26456439));
+
+        assertTrue(clienteEncontrado.isPresent());
+        assertEquals(pepeRino, clienteEncontrado.get());
+    }
 }
